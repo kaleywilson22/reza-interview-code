@@ -1,0 +1,308 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id            Int             @id @default(autoincrement())
+  bc_id         Int?
+  email         String          @unique
+  phone         String?
+  full_name     String?
+  first_name    String?
+  last_name     String?
+  hoodie_size   hoodie          @default(M)
+  full_user     Boolean         @default(true)
+  disabled      Boolean         @default(false)
+  role          role            @default(USER)
+  created_at    DateTime        @default(now()) @db.Timestamp(6)
+  updated_at    DateTime        @updatedAt
+  last_login_at DateTime?
+  invite_count  Int             @default(0)
+  invited_by    Int?
+  stripe_id     String?
+  drop_live     Int?            @default(0)
+  drop_live_sms Int?            @default(0)
+  user_category user_category   @default(DROP_A)
+  code          code[]
+  invite        invite[]
+  invite_link   invite_link[]
+  nft           nft[]
+  order         order[]
+  profile       profile?
+  reservation   reservation[]
+  shopify_order shopify_order[]
+  token         token[]
+  user_email    user_email[]
+  user_phone    user_phone[]
+  user_stripe   user_stripe[]
+  waitlist      waitlist[]
+}
+
+model profile {
+  id                Int      @id @default(autoincrement())
+  lyop              String?  @db.VarChar(10000)
+  city              String?
+  description       String?
+  display_name      String?
+  short_description String?  @db.VarChar(500)
+  profile_picture   String?
+  user_id           Int      @unique
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime @updatedAt
+  user              user     @relation(fields: [user_id], references: [id])
+  photos            photo[]
+}
+
+model photo {
+  id         Int      @id @default(autoincrement())
+  url        String
+  is_profile Boolean  @default(false)
+  profile_id Int
+  width      Int?
+  height     Int?
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+  profile    profile  @relation(fields: [profile_id], references: [id])
+
+  @@unique([id, is_profile])
+}
+
+model nft {
+  id           Int       @id @default(autoincrement())
+  url          String?
+  meta_mask_id String?
+  nft_state    nft_state @default(UNCLAIMED)
+  user_id      Int
+  created_at   DateTime  @default(now()) @db.Timestamp(6)
+  updated_at   DateTime  @updatedAt
+  user         user      @relation(fields: [user_id], references: [id])
+
+  @@unique([id, user_id])
+}
+
+model user_email {
+  id            Int        @id @default(autoincrement())
+  email         String
+  verified      Boolean    @default(false)
+  verified_at   DateTime?
+  created_at    DateTime   @default(now()) @db.Timestamp(6)
+  updated_at    DateTime   @updatedAt
+  user_id       Int
+  email_type_id Int
+  type          email_type @relation(fields: [email_type_id], references: [id])
+  user          user       @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, email_type_id])
+}
+
+model user_phone {
+  id            Int        @id @default(autoincrement())
+  phone         String
+  verified      Boolean    @default(false)
+  verified_at   DateTime?
+  created_at    DateTime   @default(now()) @db.Timestamp(6)
+  updated_at    DateTime   @updatedAt
+  user_id       Int
+  phone_type_id Int
+  type          phone_type @relation(fields: [phone_type_id], references: [id])
+  user          user       @relation(fields: [user_id], references: [id])
+}
+
+model user_stripe {
+  id         Int      @id @default(autoincrement())
+  stripe_id  String
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+  user_id    Int
+  user       user     @relation(fields: [user_id], references: [id])
+}
+
+model user_location {
+  id         Int      @id @default(autoincrement())
+  latitude   Float
+  longitude  Float
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+  user       Int      @unique
+}
+
+model email_type {
+  id    Int          @id @default(autoincrement())
+  type  String       @unique
+  email user_email[]
+}
+
+model phone_type {
+  id    Int          @id @default(autoincrement())
+  type  String       @unique
+  phone user_phone[]
+}
+
+model code {
+  type       codes    @default(EMAIL_LOGIN)
+  code       String
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+  user_id    Int
+  user       user     @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, type])
+}
+
+model token {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt
+  flag       Boolean?
+  user       user?    @relation(fields: [userId], references: [id])
+  userId     Int?
+}
+
+model waitlist {
+  id                         Int           @id @default(autoincrement())
+  email                      String        @unique
+  phone                      String?
+  lyop                       String?
+  invited_by                 Int?
+  count                      Int           @default(autoincrement())
+  created_at                 DateTime      @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime      @updatedAt
+  verification_code          Int?
+  token                      String?
+  applied                    Boolean       @default(false)
+  city                       String?
+  applied_at                 DateTime?
+  name                       String?
+  application_reminder_count Int           @default(0)
+  email_verified             Boolean       @default(false)
+  phone_verified             Boolean       @default(false)
+  shoe_size                  String?
+  application_update_count   Int           @default(0)
+  accepted                   Boolean?      @default(false)
+  accepted_at                DateTime?     @db.Timestamp(6)
+  user                       user?         @relation(fields: [invited_by], references: [id])
+  reservation                reservation[]
+
+  @@unique([email, verification_code])
+}
+
+model invite_link {
+  id          Int      @id @default(autoincrement())
+  token       String
+  invited_by  Int?
+  invite_used Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt
+  user        user?    @relation(fields: [invited_by], references: [id])
+}
+
+model reservation {
+  id                    Int       @id @unique @default(autoincrement())
+  created_at            DateTime  @default(now()) @db.Timestamp(6)
+  updated_at            DateTime  @updatedAt
+  completed_reservation Boolean   @default(false)
+  end_time              DateTime?
+  start_time            DateTime?
+  user_id               Int?
+  waitlist_id           Int?
+  unlocked              Boolean   @default(false)
+  user                  user?     @relation(fields: [user_id], references: [id])
+  waitlist              waitlist? @relation(fields: [waitlist_id], references: [id])
+  reactivated           Boolean   @default(false)
+  reactivated_at        DateTime?
+
+  @@unique([user_id])
+}
+
+model invite {
+  invited_by_id Int
+  invited_id    Int
+  user          user @relation(fields: [invited_by_id], references: [id])
+
+  @@unique([invited_by_id, invited_id])
+}
+
+model version {
+  id                   Int     @id @default(autoincrement())
+  ios_version          String?
+  ios_version_code     Int?
+  android_version      String?
+  android_version_code Int?
+  website_version      String?
+}
+
+model shopify_order {
+  id               Int    @id @default(autoincrement())
+  shopify_order_id String
+  quantity_ordered Int
+  user_id          Int
+  shoe_size        String
+  user             user   @relation(fields: [user_id], references: [id])
+}
+
+model order {
+  id               Int      @id @default(autoincrement())
+  stripe_user_id   String
+  shipping_address String
+  delivery_status  String   @default("pending")
+  payment_status   String
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  updated_at       DateTime @updatedAt
+  user_id          Int
+  checkout_session String
+  payment_intent   String
+  user             user     @relation(fields: [user_id], references: [id])
+}
+
+model message_content {
+  id                Int     @id @default(autoincrement())
+  short_description String  @unique
+  message           String
+  img_url           String?
+  link              String?
+}
+
+enum role {
+  USER
+  ADMIN
+}
+
+enum nft_state {
+  UNCLAIMED
+  TRANSFERED
+  PENDING
+  ERROR
+}
+
+enum codes {
+  PHONE_LOGIN
+  EMAIL_LOGIN
+  PHONE_RESET
+  EMAIL_RESET
+  PHONE_BACKUP
+  EMAIL_BACKUP
+}
+
+enum user_category {
+  FOUNDER
+  DROP_FOREVER
+  DROP_A
+  DROP_B
+  DROP_C
+  DROP_D
+}
+
+enum hoodie {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+}

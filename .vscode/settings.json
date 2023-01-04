@@ -1,0 +1,19 @@
+{
+    "eslint.workingDirectories": [
+        "./server",
+        "./web",
+        "./app"
+    ],
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "editor.formatOnSave": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "workbench.startupEditor": "none",
+    "editor.minimap.enabled": false,
+    "window.restoreWindows": "preserve",
+    "liveServer.settings.donotShowInfoMsg": true
+}
